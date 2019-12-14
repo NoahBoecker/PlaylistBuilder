@@ -14,7 +14,9 @@ class SpotifyApi:
     def artist_search(self, artist):
         artist_query_string = "%20".join(artist.split(" "))
         full_query_string = "{}search?q={}&type=artist".format(BASE_URL, artist_query_string)
-        return self.__get(full_query_string)
+        artist_response =  self.__get(full_query_string)
+        artists = artist_response['artists']['items']
+        return artists[0]["id"]
 
     def artist_related_artists(self, artist_id):
         query_string = "{}artists/{}/related-artists".format(BASE_URL, artist_id)
@@ -84,35 +86,39 @@ def read_config():
     return username, client_id, client_secret, redirect_url
 
 
-def main():
+def demo_everything():
     username, client_id, client_secret, redirect_url = read_config()
     api = SpotifyApi(username, "streaming", client_id, client_secret, redirect_url)
 
-
     uid = api.get_current_user_id()
-    print(uid)
+    display_demo("Getting current user id", uid)
 
     playlists = api.user_playlists_from_user_id(uid)
-    print(playlists)
+    display_demo("Playlists for the current user", playlists)
 
-    print("Starting a search with artist {}".format(seed_artist))
-    artist_response = api.artist_search(seed_artist)
-    artists = artist_response['artists']['items']
-    first_artist_id = artists[0]["id"]
-    print("Artist id: {}".format(first_artist_id))
-    print("Querying for artist related artists")
-    print("\nAnd here they are")
-    print(api.artist_related_artists(first_artist_id))
+    artist_id = api.artist_search(seed_artist)
+    display_demo("Searching for an artist ID with the query: {}".format(seed_artist), artist_id)
 
-    print("getting name from id")
-    first_artist_name = api.artist_name_from_artist_id(first_artist_id)
-    print(first_artist_name)
+    name = api.artist_name_from_artist_id(artist_id)
+    display_demo("Getting artist name from the id: {}".format(artist_id), name)
 
-    first_artist_albums = api.artist_albums_from_artist_id(first_artist_id)
-    album_id, album_name = first_artist_albums[0]
+    artist_albums = api.artist_albums_from_artist_id(artist_id)
+    display_demo("Getting albums for {}".format(artist_id), artist_albums)
 
-    print(api.get_tracks_from_album_id(album_id))
+    album_id, album_name = artist_albums[0]
+    tracks = api.get_tracks_from_album_id(album_id)
+    display_demo("Getting all the tracks for an album of {}".format(artist_id), tracks)
 
+
+def display_demo(description, demo_block_result):
+    print("--------------------------------\n")
+    print(description + ":")
+    print("{}\n".format(demo_block_result))
+
+    return demo_block_result
+
+def main():
+    demo_everything()
 
 if __name__ == "__main__":
     main()
